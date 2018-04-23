@@ -37,6 +37,10 @@ def custom_objects(backbone):
         from .vgg import custom_objects as co
     elif 'densenet' in backbone:
         from .densenet import custom_objects as co
+    elif 'squeezenet' in backbone:
+        from .squeezenet import custom_objects as co
+    elif 'mynet' in backbone:
+        from .mynetnet import custom_objects as co
     else:
         raise NotImplementedError('Backbone \'{}\' not implemented.'.format(backbone))
 
@@ -52,6 +56,10 @@ def retinanet_backbone(backbone):
         from .vgg import vgg_retinanet as rn
     elif 'densenet' in backbone:
         from .densenet import densenet_retinanet as rn
+    elif 'squeezenet' in backbone:
+        from .squeezenet import densenet_retinanet as rn
+    elif 'mynet' in backbone:
+        from .mynetnet import densenet_retinanet as rn
     else:
         raise NotImplementedError('Backbone \'{}\' not implemented.'.format(backbone))
 
@@ -67,6 +75,10 @@ def download_imagenet(backbone):
         from .vgg import download_imagenet as di
     elif 'densenet' in backbone:
         from .densenet import download_imagenet as di
+    elif 'squeezenet' in backbone:
+        from .squeezenet import download_imagenet as di
+    elif 'mynet' in backbone:
+        pass
     else:
         raise NotImplementedError('Backbone \'{}\' not implemented.'.format(backbone))
 
@@ -82,6 +94,10 @@ def validate_backbone(backbone):
         from .vgg import validate_backbone as vb
     elif 'densenet' in backbone:
         from .densenet import validate_backbone as vb
+    elif 'squeezenet' in backbone:
+        from .squeezenet import validate_backbone as vb
+    elif 'mynet' in backbone:
+        from .mynetnet import validate_backbone as vb
     else:
         raise NotImplementedError('Backbone \'{}\' not implemented.'.format(backbone))
 

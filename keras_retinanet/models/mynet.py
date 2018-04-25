@@ -18,12 +18,11 @@ import warnings
 
 import keras,keras_retinanet
 from ..models import retinanet
-from keras.models import Sequential
+from keras.models import Model
 from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense
+from keras.layers import Activation, Dropout, Flatten, Dense, Input
 from keras.layers.normalization import BatchNormalization
 from keras import backend as K
-from keras import metrics
 
 custom_objects = retinanet.custom_objects.copy()
 
@@ -33,49 +32,61 @@ def validate_backbone(backbone):
     if backbone not in allowed_backbones:
         raise ValueError('Backbone (\'{}\') not in allowed backbones ({}).'.format(backbone, allowed_backbones))
 
-def initialize_mynet(input_shape = (None, None, 3), output_shape=4):
-    mynet = Sequential()
+def droneNet(inputs=None, include_top=True, classes=10, *args, **kwargs):
+    if inputs is None :
+        if K.image_data_format() == 'channels_first':
+            input_shape = Input(shape=(3, 224, 224))
+        else:
+            input_shape = Input(shape=(224, 224, 3))
+    else:
+        input_shape=inputs
+
+    outputs = []
+
+    x = Conv2D(32, (3, 3), strides=(1, 1),use_bias=False)(input_shape)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    outputs.append(x)
+
+    for i in range(3):
+        x = Conv2D(64*(2**i), (3, 3), strides=(1, 1),use_bias=False)(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = MaxPooling2D(pool_size=(2, 2))(x)
+        outputs.append(x)
+
+    x = Conv2D(256, (3, 3), strides=(1, 1),use_bias=False)(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
+    x = MaxPooling2D(pool_size=(2, 2))(x)
+    x = Dropout(0.5)(x)
+    outputs.append(x)
     
-    mynet.add(Conv2D(32, (3, 3), input_shape=input_shape))
-    mynet.add(BatchNormalization())
-    mynet.add(Activation('relu'))
-    mynet.add(MaxPooling2D(pool_size=(2, 2)))
-    
-    mynet.add(Conv2D(64, (3, 3)))
-    mynet.add(BatchNormalization())
-    mynet.add(Activation('relu'))
-    mynet.add(MaxPooling2D(pool_size=(2, 2)))
-    
-    mynet.add(Conv2D(128, (3, 3)))
-    mynet.add(BatchNormalization())
-    mynet.add(Activation('relu'))
-    mynet.add(MaxPooling2D(pool_size=(2, 2)))
-    
-    mynet.add(Conv2D(256, (3, 3)))
-    mynet.add(BatchNormalization())
-    mynet.add(Activation('relu'))
-    mynet.add(MaxPooling2D(pool_size=(2, 2)))
-    
-    mynet.add(Conv2D(256, (3, 3)))
-    mynet.add(BatchNormalization())
-    mynet.add(Activation('relu'))
-    mynet.add(MaxPooling2D(pool_size=(2, 2)))
-    mynet.add(Dropout(0.5))
-    
-    return mynet
+
+    if include_top:
+        x = Flatten()(x)
+        x = Dense(1024)(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Dropout(0.5)(x)
+        x = Dense(classes, activation='sigmoid')(x)
+        return Model(inputs=input_shape, outputs=x, *args, **kwargs)
+    else:
+        return Model(inputs=input_shape, outputs=outputs, *args, **kwargs)
 
 
 def mynet_retinanet(num_classes, backbone=',mynet', inputs=None, modifier=None, **kwargs):
 
     # choose default input
     if inputs is None:
-        inputs = (None, None, 3)
+        inputs = Input(shape=(None, None, 3))
         
-    mynet=initialize_mynet(input_shape=inputs)
+    mynet=droneNet(inputs=inputs,include_top=False)
 
     # invoke modifier if given
     if modifier:
         mynet = modifier(mynet)
 
     # create the full model
-    return retinanet.retinanet_bbox(inputs=inputs, num_classes=num_classes, backbone_layers=mynet.outputs, **kwargs)
+    return retinanet.retinanet_bbox(inputs=inputs, num_classes=num_classes, backbone_layers=mynet.outputs[2:], **kwargs)

@@ -57,9 +57,9 @@ def retinanet_backbone(backbone):
     elif 'densenet' in backbone:
         from .densenet import densenet_retinanet as rn
     elif 'squeezenet' in backbone:
-        from .squeezenet import densenet_retinanet as rn
+        from .squeezenet import squeezenet_retinanet as rn
     elif 'mynet' in backbone:
-        from .mynetnet import densenet_retinanet as rn
+        from .mynet import mynet_retinanet as rn
     else:
         raise NotImplementedError('Backbone \'{}\' not implemented.'.format(backbone))
 
@@ -97,7 +97,7 @@ def validate_backbone(backbone):
     elif 'squeezenet' in backbone:
         from .squeezenet import validate_backbone as vb
     elif 'mynet' in backbone:
-        from .mynetnet import validate_backbone as vb
+        from .mynet import validate_backbone as vb
     else:
         raise NotImplementedError('Backbone \'{}\' not implemented.'.format(backbone))
 
